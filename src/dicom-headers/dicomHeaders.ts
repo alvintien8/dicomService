@@ -1,31 +1,10 @@
 import * as Koa from 'koa';
-import * as fs from 'fs/promises';
-import * as dicomParser from 'dicom-parser';
+import * as DicomParser from 'dicom-parser';
 import { ErrorCodes, OperationStatus } from '../common/enum';
 import { DicomServiceError } from '../common/dicomServiceError';
+import { parseDicom, readFileData } from '../common/dicomUtils';
 
-export const parseDicom = (file: Buffer): dicomParser.DataSet => {
-  try {
-    const options = { TransferSyntaxUID: '1.2.840.10008.1.2' };
-    const dataset = dicomParser.parseDicom(file, options);
-    return dataset;
-  } catch (err) {
-    console.error(`Error parsing dicom file: ${err}`);
-    throw (new DicomServiceError(ErrorCodes.ERR_FILE_PARSING_FAILED, err.message));
-  }
-}
-
-export const readFileData = async (fileId: string) => {
-  try {
-    const fileData = await fs.readFile(`./data/${fileId}`);
-    return fileData;
-  } catch (err) {
-    console.error(`Error reading file data: ${err}`);
-    throw (new DicomServiceError(ErrorCodes.ERR_FILE_NOT_FOUND, err.message));
-  }
-}
-
-export const getHeaderValue = (dataset: dicomParser.DataSet, tag: string): string | number | undefined => {
+export const getHeaderValue = (dataset: DicomParser.DataSet, tag: string): string | number | undefined => {
   const elementTag = `x${tag}`;
   const element = dataset.elements[elementTag];
 

@@ -2,8 +2,9 @@ import * as Koa from 'koa';
 import * as Router from 'koa-router';
 import * as fs from 'fs';
 import koaBody from 'koa-body';
-import { handleUpload } from './file-upload/fileUpload';
-import { handleGetFileHeaders } from './file-headers/fileHeaders';
+import { handleUpload } from './dicom-upload/dicomUpload';
+import { handleGetFileHeaders } from './dicom-headers/dicomHeaders';
+import { handleDicomToPng } from './dicom-to-png/dicomToPng';
 
 const app = new Koa();
 const router = new Router();
@@ -17,6 +18,10 @@ router.post('/upload', async (ctx) => {
 
 router.get('/headers/:fileId', async (ctx) => {
   await handleGetFileHeaders(ctx);
+})
+
+router.get('/image/:fileId', async (ctx) => {
+  await handleDicomToPng(ctx);
 })
 
 app.use(async (ctx, next) => {

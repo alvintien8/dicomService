@@ -6,11 +6,20 @@ import { DicomServiceError } from '../common/dicomServiceError';
 import { parseDicom, readFileData } from '../common/dicomUtils';
 import { PNG } from 'pngjs';
 
+//TODO: can make this more flexible depending on settings
+//perhaps scope to greyscale for now and tackle RGB later on.
 export const createPng = (dataset: DicomParser.DataSet) => {
   const pixelDataElement = dataset.elements.x7fe00010;
-  const pixelData = new Uint8Array(dataset.byteArray.buffer, pixelDataElement.dataOffset, pixelDataElement.length);
-  const width = dataset.uint16('x00280011');
-  const height = dataset.uint16('x00280010');
+  const pixelData = new Uint8Array(dataset.byteArray.buffer, pixelDataElement.dataOffset, pixelDataElement.length); //3639616
+  const height = dataset.uint16('x00280010'); //rows 1537
+  const width = dataset.uint16('x00280011'); //cols 1184
+  const samplesPerPixel = dataset.uint16('x00280002');
+  const numFrames = dataset.uint16('x00280008');
+  const bitsAllocated = dataset.uint16('x00280100');
+
+  console.log("samples per pixel " + samplesPerPixel);
+  console.log("total frames " + numFrames);
+  console.log('bits allocated ' + bitsAllocated);
 
   if (pixelData === undefined || width === undefined || height === undefined) {
     throw (new DicomServiceError(ErrorCodes.ERR_INVALID_IMAGE_DATA));
@@ -20,14 +29,14 @@ export const createPng = (dataset: DicomParser.DataSet) => {
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      const pixelIndex = y * width + x;
-      const pixelValue = pixelData[pixelIndex];
+      const pixelIndex = (y * width + x) << 1;
+      const pixelValue = (pixelData[pixelIndex] << 8) | pixelData[pixelIndex + 1];
       const idx = (y * width + x) << 2;
 
       image.data[idx] = pixelValue; // Red
       image.data[idx + 1] = pixelValue; // Green
       image.data[idx + 2] = pixelValue; // Blue
-      image.data[idx + 3] = 255; // Alpha
+      image.data[idx + 3] = 65535; // Alpha
     }
   }
 

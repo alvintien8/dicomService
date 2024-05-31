@@ -11,7 +11,7 @@ const config = {
 }
 
 router.post('/upload', async (ctx) => {
-    handleUpload(ctx);
+    await handleUpload(ctx);
 });
 
 app.use(async (ctx, next) => {
@@ -23,11 +23,17 @@ app.use(router.routes());
 app.use(router.allowedMethods());
 
 fs.access("./data", (err) => {
-    if (err) {
+    if (err && err.code === "ENOENT") {
         console.log('data directory does not exist, proceeding to create one');
-        fs.mkdir('./data', () => {
-            console.log('created data directory');
+        fs.mkdir('./data', (err) => {
+            if (err) {
+                console.error(`Error encountered while initializing data directory: ${err}`, err)
+            } else {
+                console.log('successfully created data directory');
+            }
         });
+    } else if (err) {
+        console.error(err);
     }
 })
 

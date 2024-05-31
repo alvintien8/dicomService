@@ -11,6 +11,7 @@
   "author": "Alvin Tien",
   "license": "ISC",
   "dependencies": {
+    "dicom-parser": "^1.8.21",
     "formidable": "^3.5.1",
     "koa": "^2.15.3",
     "koa-body": "^6.0.1",

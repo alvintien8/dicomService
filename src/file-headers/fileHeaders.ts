@@ -1,12 +1,8 @@
 import * as Koa from 'koa';
 import * as fs from 'fs/promises';
 import * as dicomParser from 'dicom-parser';
-
-enum HeaderExtractionStatus {
-  SUCCESS = "SUCCESS",
-  ERR_FILE_NOT_FOUND = "ERR_FILE_NOT_FOUND",
-  ERR_HEADER_READ_FAILED = "ERR_HEADER_READ_FAILED"
-}
+import { ErrorCodes, OperationStatus } from '../common/enum';
+import { DicomServiceError } from '../common/dicomServiceError';
 
 export const parseDicom = (file: Buffer): dicomParser.DataSet => {
   try {
@@ -15,8 +11,7 @@ export const parseDicom = (file: Buffer): dicomParser.DataSet => {
     return dataset;
   } catch (err) {
     console.error(`Error parsing dicom file: ${err}`);
-    //TODO: rethrow with a custom code
-    throw (err);
+    throw (new DicomServiceError(ErrorCodes.ERR_FILE_PARSING_FAILED, err.message));
   }
 }
 
@@ -26,8 +21,7 @@ export const readFileData = async (fileId: string) => {
     return fileData;
   } catch (err) {
     console.error(`Error reading file data: ${err}`);
-    //TODO: rethrow with a custom code
-    throw (err);
+    throw (new DicomServiceError(ErrorCodes.ERR_FILE_NOT_FOUND, err.message));
   }
 }
 
@@ -35,10 +29,8 @@ export const getHeaderValue = (dataset: dicomParser.DataSet, tag: string): strin
   const elementTag = `x${tag}`;
   const element = dataset.elements[elementTag];
 
-  //TODO: makes more sense to error out with 404
   if (element === undefined) {
-    console.warn(`Cannot find DICOM element with tag: ${elementTag}`);
-    return null;
+    throw (new DicomServiceError(ErrorCodes.ERR_ELEMENT_NOT_FOUND, `DICOM element not found with tag ${elementTag}`));
   }
 
   const vr = element.vr;
@@ -79,15 +71,22 @@ export const handleGetFileHeaders = async (ctx: Koa.Context) => {
     //TODO: determine whether returning stringified values make sense, or we should actually convert them over to the right types
     ctx.status = 200;
     ctx.body = {
+      status: OperationStatus.SUCCESS,
       tag,
       value
     }
   } catch (err) {
-    ctx.status = 500;
+    if (err instanceof DicomServiceError && err.code === ErrorCodes.ERR_ELEMENT_NOT_FOUND) {
+      ctx.status = 404;
+    } else {
+      ctx.status = 500;
+    }
+
     ctx.body = {
-      status: "HEADER READ FAILED",
+      status: OperationStatus.ERROR,
       errorDetails: {
-        message: "Failed to fetch header data"
+        code: err instanceof DicomServiceError ? err.code : null,
+        message: err.message
       }
     }
   }

@@ -3,6 +3,7 @@ import * as Router from 'koa-router';
 import * as fs from 'fs';
 import koaBody from 'koa-body';
 import { handleUpload } from './file-upload/fileUpload';
+import { handleGetFileHeaders } from './file-headers/fileHeaders';
 
 const app = new Koa();
 const router = new Router();
@@ -13,6 +14,10 @@ const config = {
 router.post('/upload', async (ctx) => {
     await handleUpload(ctx);
 });
+
+router.get('/headers/:fileId', async (ctx) => {
+    await handleGetFileHeaders(ctx);
+})
 
 app.use(async (ctx, next) => {
     console.log('Url:', ctx.url);

@@ -10,7 +10,9 @@ const app = new Koa();
 const router = new Router();
 const config = {
   port: 3000,
-  maxFileSize: 10485760
+  maxFileSize: 10485760,
+  uploadDir: './data',
+  exportDir: './data/export'
 }
 
 router.post('/upload', async (ctx) => {
@@ -35,9 +37,9 @@ app.use(koaBody({
   formidable: {
     uploadDir: './data',
     keepExtensions: true,
-    multiples: false,
     maxFiles: 1,
-    maxFileSize: config.maxFileSize
+    maxFileSize: config.maxFileSize,
+    filename: () => 'upload',
   }
 }));
 app.use(router.routes());

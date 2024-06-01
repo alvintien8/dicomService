@@ -1,5 +1,5 @@
 import * as Koa from 'koa';
-import * as formidable from 'formidable';
+import * as Formidable from 'formidable';
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs/promises';
 import { ErrorCodes, OperationStatus } from '../common/enum';
@@ -9,8 +9,10 @@ import { DicomServiceError } from '../common/dicomServiceError';
 export const handleUpload = async (ctx: Koa.Context) => {
 
   try {
+    validateFiles(ctx.request.files);
+
     const fileId = uuidv4();
-    const file = (ctx.request.files.file as unknown as formidable.File).toJSON();
+    const file = (ctx.request.files.file as unknown as Formidable.File).toJSON();
 
     await validateDicom(file.newFilename);
     await fs.rename(`./data/${file.newFilename}`, `./data/${fileId}`);
@@ -22,7 +24,7 @@ export const handleUpload = async (ctx: Koa.Context) => {
     ctx.status = 201;
   } catch (err) {
     console.error(err);
-    if (err instanceof DicomServiceError && err.code === ErrorCodes.ERR_INVALID_DICOM) {
+    if (err instanceof DicomServiceError && (err.code === ErrorCodes.ERR_INVALID_DICOM || err.code === ErrorCodes.ERR_FILE_NOT_FOUND)) {
       ctx.status = 400;
     } else {
       ctx.status = 500;
@@ -38,12 +40,22 @@ export const handleUpload = async (ctx: Koa.Context) => {
   }
 }
 
+export const validateFiles = (files: Formidable.Files) => {
+  if (!files || !Object.keys(files).includes('file')) {
+    throw (new DicomServiceError(ErrorCodes.ERR_FILE_NOT_FOUND));
+  }
+
+  if (Array.isArray(files.file) || Object.keys(files).length > 1) {
+    throw (new DicomServiceError(ErrorCodes.ERR_MULTI_FILE_UNSUPPORTED));
+  }
+}
+
 export const validateDicom = async (fileName: string) => {
   try {
     const file = await readFileData(fileName);
     const dataset = parseDicom(file);
 
-    //check for mandatory dicom tags
+    //a file is condered a dicom if the mandatory tags are found
     const patientName = dataset.string('x00100010');
     const studyDate = dataset.string('x00080020');
 

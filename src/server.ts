@@ -39,6 +39,7 @@ app.use(koaBody({
     keepExtensions: true,
     maxFiles: 1,
     maxFileSize: config.maxFileSize,
+    //for simplicity, use one name for the uploaded file. This simplifies file system clean up when multiple files are sent over
     filename: () => 'upload',
   }
 }));

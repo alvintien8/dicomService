@@ -24,7 +24,7 @@ export const handleUpload = async (ctx: Koa.Context) => {
     ctx.status = 201;
   } catch (err) {
     console.error(err);
-    if (err instanceof DicomServiceError && (err.code === ErrorCodes.ERR_INVALID_DICOM || err.code === ErrorCodes.ERR_FILE_NOT_FOUND)) {
+    if (err instanceof DicomServiceError && (err.code === ErrorCodes.ERR_INVALID_DICOM || err.code === ErrorCodes.ERR_FILE_NOT_FOUND || ErrorCodes.ERR_MULTI_FILE_UNSUPPORTED)) {
       ctx.status = 400;
     } else {
       ctx.status = 500;

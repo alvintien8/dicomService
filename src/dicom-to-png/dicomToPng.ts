@@ -16,13 +16,14 @@ export const createPng = (dataset: DicomParser.DataSet) => {
   const samplesPerPixel = dataset.uint16('x00280002');
   const numFrames = dataset.uint16('x00280008');
   const bitsAllocated = dataset.uint16('x00280100');
-
-  console.log("samples per pixel " + samplesPerPixel);
-  console.log("total frames " + numFrames);
-  console.log('bits allocated ' + bitsAllocated);
+  const bitsStored = dataset.uint16('x00280101');
 
   if (pixelData === undefined || width === undefined || height === undefined) {
     throw (new DicomServiceError(ErrorCodes.ERR_INVALID_IMAGE_DATA));
+  }
+
+  if (samplesPerPixel > 1 || numFrames > 1 || bitsAllocated > 16 || bitsAllocated < 8) {
+    throw (new DicomServiceError(ErrorCodes.ERR_UNSUPPORTED_IMAGE_FORMAT));
   }
 
   const image = new PNG({
@@ -30,7 +31,7 @@ export const createPng = (dataset: DicomParser.DataSet) => {
     height,
     colorType: 0,
     inputColorType: 0,
-    bitDepth: 16,
+    bitDepth: bitsAllocated > 8 ? 16 : 8,
     bgColor: { red: 0, green: 0, blue: 0 }
   });
 
@@ -38,9 +39,19 @@ export const createPng = (dataset: DicomParser.DataSet) => {
     for (let x = 0; x < width; x++) {
       const pixelIndex = (y * width + x) << 1;
       const idx = (y * width + x) << 1;
+      let msb = pixelData[pixelIndex];
+      let lsb = pixelData[pixelIndex + 1] & 0xFF;
 
-      image.data[idx] = pixelData[pixelIndex]; // high bit
-      image.data[idx + 1] = pixelData[pixelIndex + 1] & 0xFF; // low bit
+      //handle scaling for 12 bit images
+      if (bitsStored === 12) {
+        const ratio = (2 ** 16 - 1) / (2 ** 12 - 1)
+        const upscaledValue = ((msb << 8 | lsb) * ratio) & 0xFFFF;
+        msb = upscaledValue >> 8;
+        lsb = upscaledValue & 0xFF;
+      }
+
+      image.data[idx] = msb; // high byte
+      image.data[idx + 1] = lsb; // low byte
     }
   }
 
@@ -75,8 +86,6 @@ export const handleDicomToPng = async (ctx: Koa.Context) => {
     ctx.set('Content-type', 'image/png');
     ctx.set('Content-disposition', `attachment; filename=${fileId}.png`);
     ctx.body = fs.createReadStream(outputFilePath);
-
-    //TODO: need to return the actual converted image
   } catch (err) {
     ctx.status = 500;
     ctx.body = {

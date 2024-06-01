@@ -9,7 +9,8 @@ import { handleDicomToPng } from './dicom-to-png/dicomToPng';
 const app = new Koa();
 const router = new Router();
 const config = {
-  port: 3000
+  port: 3000,
+  maxFileSize: 10485760
 }
 
 router.post('/upload', async (ctx) => {
@@ -28,7 +29,17 @@ app.use(async (ctx, next) => {
   console.log('Url:', ctx.url);
   await next();
 });
-app.use(koaBody({ multipart: true, urlencoded: true, formidable: { uploadDir: './data', keepExtensions: true, multiples: false } }));
+app.use(koaBody({
+  multipart: true,
+  urlencoded: true,
+  formidable: {
+    uploadDir: './data',
+    keepExtensions: true,
+    multiples: false,
+    maxFiles: 1,
+    maxFileSize: config.maxFileSize
+  }
+}));
 app.use(router.routes());
 app.use(router.allowedMethods());
 

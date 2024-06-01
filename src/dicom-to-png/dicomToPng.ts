@@ -25,18 +25,22 @@ export const createPng = (dataset: DicomParser.DataSet) => {
     throw (new DicomServiceError(ErrorCodes.ERR_INVALID_IMAGE_DATA));
   }
 
-  const image = new PNG({ width, height, colorType: 0 });
+  const image = new PNG({
+    width,
+    height,
+    colorType: 0,
+    inputColorType: 0,
+    bitDepth: 16,
+    bgColor: { red: 0, green: 0, blue: 0 }
+  });
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const pixelIndex = (y * width + x) << 1;
-      const pixelValue = (pixelData[pixelIndex] << 8) | pixelData[pixelIndex + 1];
-      const idx = (y * width + x) << 2;
+      const idx = (y * width + x) << 1;
 
-      image.data[idx] = pixelValue; // Red
-      image.data[idx + 1] = pixelValue; // Green
-      image.data[idx + 2] = pixelValue; // Blue
-      image.data[idx + 3] = 65535; // Alpha
+      image.data[idx] = pixelData[pixelIndex]; // high bit
+      image.data[idx + 1] = pixelData[pixelIndex + 1] & 0xFF; // low bit
     }
   }
 

@@ -9,8 +9,93 @@ jest.mock('uuid', () => ({ v4: () => 'file-id' }));
 
 describe('dicomUpload', () => {
 
-  afterAll(() => {
+  afterEach(() => {
     jest.restoreAllMocks();
+  })
+
+  it('should return 201 success', async () => {
+    jest.spyOn(fs, "rename").mockImplementation();
+    jest.spyOn(fs, "unlink").mockImplementation();
+    jest.spyOn(DicomUpload, "validateDicom").mockImplementation();
+    jest.spyOn(DicomUpload, "validateFiles").mockImplementation();
+
+    const ctx = createMockContext();
+    ctx.request.files = {
+      file: {
+        size: 100000,
+        newFilename: 'new-file-name',
+        hashAlgorithm: false,
+        //@ts-expect-error type error
+        toJSON: () => { return { newFileName: "new-file-name" } },
+      }
+    }
+    await DicomUpload.handleUpload(ctx);
+
+    expect(ctx.body).toEqual({
+      fileId: "file-id",
+      status: OperationStatus.SUCCESS
+    });
+    expect(ctx.status).toBe(201);
+  })
+
+
+  it('should return 500 level error', async () => {
+    jest.spyOn(fs, "rename").mockImplementation(() => { throw new Error() });
+    jest.spyOn(fs, "unlink").mockImplementation();
+    jest.spyOn(DicomUpload, "validateDicom").mockImplementation();
+    jest.spyOn(DicomUpload, "validateFiles").mockImplementation();
+
+    const ctx = createMockContext();
+    ctx.request.files = {
+      file: {
+        size: 100000,
+        newFilename: 'new-file-name',
+        hashAlgorithm: false,
+        //@ts-expect-error type error
+        toJSON: () => { return { newFileName: "new-file-name" } },
+      }
+    }
+    await DicomUpload.handleUpload(ctx);
+
+    expect(ctx.body).toEqual({
+      status: OperationStatus.ERROR,
+      errorDetails: {
+        code: "ERR_UPLOAD_FAILED",
+        message: "Error encountered while uploading dicom file",
+      }
+    });
+    expect(ctx.status).toBe(500);
+  })
+
+  it('should return 400 level error', async () => {
+    jest.spyOn(fs, "rename").mockImplementation();
+    jest.spyOn(fs, "unlink").mockImplementation();
+    jest.spyOn(DicomUpload, "validateDicom").mockImplementation();
+    jest.spyOn(DicomUpload, "validateFiles")
+      .mockImplementation(() => {
+        throw (new DicomServiceError(ErrorCodes.ERR_FILE_NOT_FOUND))
+      });
+
+    const ctx = createMockContext();
+    ctx.request.files = {
+      file: {
+        size: 100000,
+        newFilename: 'new-file-name',
+        hashAlgorithm: false,
+        //@ts-expect-error type error
+        toJSON: () => { return { newFileName: "new-file-name" } },
+      }
+    }
+    await DicomUpload.handleUpload(ctx);
+
+    expect(ctx.body).toEqual({
+      status: OperationStatus.ERROR,
+      errorDetails: {
+        code: "ERR_FILE_NOT_FOUND",
+        message: "Error encountered while uploading dicom file",
+      }
+    });
+    expect(ctx.status).toBe(400);
   })
 
   describe('validateFiles', () => {
@@ -104,56 +189,4 @@ describe('dicomUpload', () => {
     })
   })
 
-  it('should successfully upload a file', async () => {
-    jest.spyOn(fs, "rename").mockImplementation();
-    jest.spyOn(fs, "unlink").mockImplementation();
-    jest.spyOn(DicomUpload, "validateDicom").mockImplementation();
-    jest.spyOn(DicomUpload, "validateFiles").mockImplementation();
-
-    const ctx = createMockContext();
-    ctx.request.files = {
-      file: {
-        size: 100000,
-        newFilename: 'new-file-name',
-        hashAlgorithm: false,
-        //@ts-expect-error type error
-        toJSON: () => { return { newFileName: "new-file-name" } },
-      }
-    }
-    await DicomUpload.handleUpload(ctx);
-
-    expect(ctx.body).toEqual({
-      fileId: "file-id",
-      status: OperationStatus.SUCCESS
-    });
-    expect(ctx.status).toBe(201);
-  })
-
-  it('should fail to upload a file', async () => {
-    jest.spyOn(fs, "rename").mockImplementation(() => { throw new Error() });
-    jest.spyOn(fs, "unlink").mockImplementation();
-    jest.spyOn(DicomUpload, "validateDicom").mockImplementation();
-    jest.spyOn(DicomUpload, "validateFiles").mockImplementation();
-
-    const ctx = createMockContext();
-    ctx.request.files = {
-      file: {
-        size: 100000,
-        newFilename: 'new-file-name',
-        hashAlgorithm: false,
-        //@ts-expect-error type error
-        toJSON: () => { return { newFileName: "new-file-name" } },
-      }
-    }
-    await DicomUpload.handleUpload(ctx);
-
-    expect(ctx.body).toEqual({
-      status: OperationStatus.ERROR,
-      errorDetails: {
-        code: "ERR_UPLOAD_FAILED",
-        message: "Error encountered while uploading dicom file",
-      }
-    });
-    expect(ctx.status).toBe(500);
-  })
 })

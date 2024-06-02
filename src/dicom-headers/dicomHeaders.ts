@@ -12,6 +12,7 @@ export const getHeaderValue = (dataset: DicomParser.DataSet, tag: string): strin
     throw (new DicomServiceError(ErrorCodes.ERR_ELEMENT_NOT_FOUND, `DICOM element not found with tag ${elementTag}`));
   }
 
+  //extract header attributes to compatible types if possible. String values will be used as a fallback
   const vr = element.vr;
   switch (vr) {
     case 'US':
@@ -47,7 +48,6 @@ export const handleGetFileHeaders = async (ctx: Koa.Context) => {
     const dataset = parseDicom(file);
     const value = getHeaderValue(dataset, tag);
 
-    //TODO: determine whether returning stringified values make sense, or we should actually convert them over to the right types
     ctx.status = 200;
     ctx.body = {
       status: OperationStatus.SUCCESS,

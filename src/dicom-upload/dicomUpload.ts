@@ -34,7 +34,7 @@ export const handleUpload = async (ctx: Koa.Context) => {
       status: OperationStatus.ERROR,
       errorDetails: {
         code: err instanceof DicomServiceError ? err.code : ErrorCodes.ERR_UPLOAD_FAILED,
-        message: "Error encountered while uploading dicom file"
+        message: err.message ? err.message : "Error encountered while uploading dicom file"
       }
     }
   }

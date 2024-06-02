@@ -5,6 +5,8 @@ import koaBody from 'koa-body';
 import { handleUpload } from './dicom-upload/dicomUpload';
 import { handleGetFileHeaders } from './dicom-headers/dicomHeaders';
 import { handleDicomToPng } from './dicom-to-png/dicomToPng';
+import { koaSwagger } from 'koa2-swagger-ui';
+import * as spec from '../doc/swagger.json';
 
 const app = new Koa();
 const router = new Router();
@@ -27,6 +29,16 @@ router.get('/image/:fileId', async (ctx) => {
   await handleDicomToPng(ctx);
 })
 
+//router.use(koaSwagger({ routePrefix: '/openapi', swaggerOptions: { spec } }));
+
+app.use(
+  koaSwagger({
+    routePrefix: '/openapi', // host at /swagger instead of default /docs
+    swaggerOptions: {
+      spec, // example path to json
+    },
+  }),
+);
 app.use(async (ctx, next) => {
   console.log('Url:', ctx.url);
   await next();

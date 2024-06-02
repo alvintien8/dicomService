@@ -1,0 +1,219 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "DICOM Image Service",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/headers/{fileId}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fileId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "d4b4def7-ef5b-4823-a384-9a245c671e4a"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tag",
+            "schema": {
+              "type": "string",
+              "example": "00100010"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Header values found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HeaderData"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "File not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Retrieve header values from a dicom file id. Header values will either be numerical or displayed in a strigified manner depending on its value representation",
+        "operationId": "getHeader",
+        "summary": "get header values"
+      }
+    },
+    "/image/{fileId}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fileId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Retrieves a PNG image from a DICOM file id. Only supports single frame images up to 16 bit greyscale.",
+        "operationId": "getImage",
+        "summary": "retrieve a PNG image from a DICOM file id"
+      }
+    },
+    "/upload": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "File uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileUploadStatus"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid DICOM file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Uploads a dicom file. Can only support single file upload up to 10Mb.",
+        "operationId": "uploadFile",
+        "summary": "DICOM file upload"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HeaderData": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "SUCCESS"
+          },
+          "tag": {
+            "type": "string",
+            "example": "00280010"
+          },
+          "value": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          }
+        }
+      },
+      "FileUploadStatus": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "SUCCESS"
+          },
+          "fileId": {
+            "type": "string",
+            "example": "d4b4def7-ef5b-4823-a384-9a245c671e4a"
+          }
+        }
+      },
+      "OperationError": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ERROR"
+          },
+          "code": {
+            "type": "string",
+            "example": "ERR_FILE_NOT_FOUND"
+          },
+          "message": {
+            "type": "string",
+            "example": "Unexpected error"
+          }
+        }
+      }
+    }
+  },
+  "tags": []
+}

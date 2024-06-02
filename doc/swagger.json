@@ -174,10 +174,12 @@
           "value": {
             "oneOf": [
               {
-                "type": "string"
+                "type": "string",
+                "example": "Alvin Tien"
               },
               {
-                "type": "number"
+                "type": "number",
+                "example": 3.14
               }
             ]
           }

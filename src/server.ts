@@ -29,13 +29,11 @@ router.get('/image/:fileId', async (ctx) => {
   await handleDicomToPng(ctx);
 })
 
-//router.use(koaSwagger({ routePrefix: '/openapi', swaggerOptions: { spec } }));
-
 app.use(
   koaSwagger({
-    routePrefix: '/openapi', // host at /swagger instead of default /docs
+    routePrefix: '/openapi',
     swaggerOptions: {
-      spec, // example path to json
+      spec,
     },
   }),
 );

@@ -161,7 +161,7 @@ describe('dicomUpload', () => {
     it('should pass validation', () => {
       const currentDirectory = __dirname;
       jest.spyOn(DicomUtils, 'readFileData').mockImplementation(async (fileId) => {
-        const fileData = await fs.readFile(`${currentDirectory}\\data\\${fileId}`);
+        const fileData = await fs.readFile(`${currentDirectory}\\test-data\\${fileId}`);
         return fileData;
       });
       jest.spyOn(fs, "unlink").mockImplementation();
@@ -174,7 +174,7 @@ describe('dicomUpload', () => {
     it('should fail validation', async () => {
       const currentDirectory = __dirname;
       jest.spyOn(DicomUtils, 'readFileData').mockImplementation(async (fileId) => {
-        const fileData = await fs.readFile(`${currentDirectory}\\data\\${fileId}`);
+        const fileData = await fs.readFile(`${currentDirectory}\\test-data\\${fileId}`);
         return fileData;
       });
       jest.spyOn(fs, "unlink").mockImplementation();

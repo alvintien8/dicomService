@@ -11,7 +11,7 @@ describe('dicomHeaders', () => {
   let dataset: DicomParser.DataSet;
 
   beforeAll(async () => {
-    file = await fs.readFile(`${__dirname}\\data\\sample-xray-dicom`);
+    file = await fs.readFile(`${__dirname}\\test-data\\sample-xray-dicom`);
     dataset = DicomUtils.parseDicom(file)
   })
 

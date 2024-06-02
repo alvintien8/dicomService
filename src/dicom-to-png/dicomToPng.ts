@@ -37,7 +37,6 @@ export const handleDicomToPng = async (ctx: Koa.Context) => {
 
 export const createPng = (dataset: DicomParser.DataSet) => {
   const pixelDataElement = dataset.elements.x7fe00010;
-  const pixelData = new Uint8Array(dataset.byteArray.buffer, pixelDataElement.dataOffset, pixelDataElement.length);
   const height = dataset.uint16('x00280010');
   const width = dataset.uint16('x00280011');
   const samplesPerPixel = dataset.uint16('x00280002');
@@ -45,14 +44,15 @@ export const createPng = (dataset: DicomParser.DataSet) => {
   const bitsAllocated = dataset.uint16('x00280100');
   const bitsStored = dataset.uint16('x00280101');
 
-  if (pixelData === undefined || width === undefined || height === undefined) {
-    throw (new DicomServiceError(ErrorCodes.ERR_INVALID_IMAGE_DATA));
+  if (pixelDataElement === undefined || width === undefined || height === undefined) {
+    throw (new DicomServiceError(ErrorCodes.ERR_INVALID_IMAGE_DATA, "Invalid data found on selected file"));
   }
 
   if (samplesPerPixel > 1 || numFrames > 1 || bitsAllocated > 16 || bitsAllocated < 8) {
-    throw (new DicomServiceError(ErrorCodes.ERR_UNSUPPORTED_IMAGE_FORMAT));
+    throw (new DicomServiceError(ErrorCodes.ERR_UNSUPPORTED_IMAGE_FORMAT, "DICOM format is not supported for png export"));
   }
 
+  const pixelData = new Uint8Array(dataset.byteArray.buffer, pixelDataElement.dataOffset, pixelDataElement.length);
   const image = new PNG({
     width,
     height,

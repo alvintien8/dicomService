@@ -6,7 +6,7 @@ import { handleUpload } from './dicom-upload/dicomUpload';
 import { handleGetFileHeaders } from './dicom-headers/dicomHeaders';
 import { handleDicomToPng } from './dicom-to-png/dicomToPng';
 import { koaSwagger } from 'koa2-swagger-ui';
-import * as spec from '../doc/swagger.json';
+import * as spec from '../doc/openapi.json';
 
 const app = new Koa();
 const router = new Router();

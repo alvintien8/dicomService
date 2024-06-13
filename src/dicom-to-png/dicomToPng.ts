@@ -76,8 +76,8 @@ export const handle16BitGreyscale = (image: PNG, pixelData: Uint8Array, shouldUp
     for (let x = 0; x < image.width; x++) {
       const pixelIndex = (y * image.width + x) << 1;
       const idx = (y * image.width + x) << 1;
-      let msb = pixelData[pixelIndex];
-      let lsb = pixelData[pixelIndex + 1] & 0xFF;
+      let lsb = pixelData[pixelIndex];
+      let msb = pixelData[pixelIndex + 1] & 0xFF;
 
       //handle scaling for 12 bit images
       if (shouldUpscale) {
@@ -87,8 +87,8 @@ export const handle16BitGreyscale = (image: PNG, pixelData: Uint8Array, shouldUp
         lsb = upscaledValue & 0xFF;
       }
 
-      image.data[idx] = msb; // high byte
-      image.data[idx + 1] = lsb; // low byte
+      image.data[idx] = lsb; // low byte
+      image.data[idx + 1] = msb; // high byte
     }
   }
 }

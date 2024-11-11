@@ -9,3 +9,6 @@ build/
 
 #data directory
 data/
+
+#project files
+.idea
